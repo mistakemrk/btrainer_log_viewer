@@ -1,0 +1,7 @@
+[general]
+contrib=contrib-title-conventional-commits
+ignore=body-is-missing
+
+[contrib-title-conventional-commits]
+# タイプを指定（必要に応じてカスタマイズ）
+types = fix,feat,chore,docs,style,refactor,test,ci,build
