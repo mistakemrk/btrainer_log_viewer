@@ -7,6 +7,9 @@ import 'dart:math';
 import 'package:flutter_map_cancellable_tile_provider/flutter_map_cancellable_tile_provider.dart';
 import 'package:flutter/foundation.dart' show kIsWeb;
 
+import 'models/workout_data.dart';
+import 'utils/nmea_parser.dart';
+
 void main() {
   runApp(const MyApp());
 }
@@ -36,12 +39,20 @@ class MyHomePage extends StatefulWidget {
 
 class TrackData {
   final List<LatLng> points;
+  final List<WorkoutData> workoutData;
+  final List<HeartRateData> heartRateData;
+  final List<WorkoutEvent> workoutEvents;
+  final List<MusicInfo> musicInfo;
   final String? startTime;
   final String? endTime;
   final double totalDistance;
 
   TrackData({
     required this.points,
+    this.workoutData = const [],
+    this.heartRateData = const [],
+    this.workoutEvents = const [],
+    this.musicInfo = const [],
     this.startTime,
     this.endTime,
     this.totalDistance = 0.0,
@@ -93,6 +104,11 @@ class _MyHomePageState extends State<MyHomePage> {
   // ファイル内容の処理を別メソッドに分離
   Future<void> _processLines(List<String> lines) async {
     final List<LatLng> points = [];
+    final List<WorkoutData> workoutData = [];
+    final List<HeartRateData> heartRateData = [];
+    final List<WorkoutEvent> workoutEvents = [];
+    final List<MusicInfo> musicInfo = [];
+
     LatLng? prevPoint;
     String? startTime;
     String? endTime;
@@ -120,9 +136,21 @@ class _MyHomePageState extends State<MyHomePage> {
             points.add(currentPoint);
             prevPoint = currentPoint;
           }
+        } else if (line.startsWith('\$PSSCR')) {
+          final data = NmeaParser.parsePSSCR(line);
+          if (data != null) workoutData.add(data);
+        } else if (line.startsWith('\$PSNYEHR')) {
+          final data = NmeaParser.parsePSNYEHR(line);
+          if (data != null) heartRateData.add(data);
+        } else if (line.startsWith('\$PSNYWOL')) {
+          final data = NmeaParser.parsePSNYWOL(line);
+          if (data != null) workoutEvents.add(data);
+        } else if (line.startsWith('\$PSNYMMP')) {
+          final data = NmeaParser.parsePSNYMMP(line);
+          if (data != null) musicInfo.add(data);
         }
       } catch (e) {
-        debugPrint('Error parsing NMEA data: $e');
+        debugPrint('Error parsing line: $e');
       }
     }
 
@@ -132,6 +160,10 @@ class _MyHomePageState extends State<MyHomePage> {
         startTime: startTime,
         endTime: endTime,
         totalDistance: totalDistance,
+        workoutData: workoutData,
+        heartRateData: heartRateData,
+        workoutEvents: workoutEvents,
+        musicInfo: musicInfo,
       );
     });
 

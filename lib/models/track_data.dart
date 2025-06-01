@@ -1,17 +1,29 @@
 import 'package:latlong2/latlong.dart';
+import 'workout_data.dart';
 
 class TrackData {
   final List<LatLng> points;
   final String? startTime;
   final String? endTime;
   final double totalDistance;
+  final List<WorkoutData> workoutData;
+  final List<HeartRateData> heartRateData;
+  final List<WorkoutEvent> workoutEvents;
+  final List<MusicInfo> musicInfo;
 
   TrackData({
     required this.points,
     this.startTime,
     this.endTime,
     this.totalDistance = 0.0,
-  });
+    List<WorkoutData>? workoutData,
+    List<HeartRateData>? heartRateData,
+    List<WorkoutEvent>? workoutEvents,
+    List<MusicInfo>? musicInfo,
+  }) : workoutData = workoutData ?? [],
+       heartRateData = heartRateData ?? [],
+       workoutEvents = workoutEvents ?? [],
+       musicInfo = musicInfo ?? [];
 
   bool get hasData => points.isNotEmpty;
 
