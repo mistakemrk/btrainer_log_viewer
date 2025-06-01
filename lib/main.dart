@@ -34,23 +34,36 @@ class MyHomePage extends StatefulWidget {
   State<MyHomePage> createState() => _MyHomePageState();
 }
 
+class TrackData {
+  final List<LatLng> points;
+  final String? startTime;
+  final String? endTime;
+  final double totalDistance;
+
+  TrackData({
+    required this.points,
+    this.startTime,
+    this.endTime,
+    this.totalDistance = 0.0,
+  });
+}
+
 class _MyHomePageState extends State<MyHomePage> {
-  List<LatLng> trackPoints = [];
-  final MapController mapController = MapController();
+  late final MapController mapController;
+  late TrackData trackData;
   bool isMapVisible = true;
 
-  // 追加: 走行データを保持する変数
-  String? startTime;
-  String? endTime;
-  double totalDistance = 0.0;
+  @override
+  void initState() {
+    super.initState();
+    mapController = MapController();
+    trackData = TrackData(points: []);
+  }
 
   Future<void> _openFile() async {
     // データをクリア
     setState(() {
-      trackPoints = [];
-      startTime = null;
-      endTime = null;
-      totalDistance = 0.0;
+      trackData = TrackData(points: []);
     });
 
     try {
@@ -81,6 +94,9 @@ class _MyHomePageState extends State<MyHomePage> {
   Future<void> _processLines(List<String> lines) async {
     final List<LatLng> points = [];
     LatLng? prevPoint;
+    String? startTime;
+    String? endTime;
+    double totalDistance = 0.0;
 
     for (var line in lines) {
       try {
@@ -89,7 +105,7 @@ class _MyHomePageState extends State<MyHomePage> {
           if (parts.length >= 6 && parts[6] != '0') {
             // 時刻の取得
             final time = parts[1];
-            if (startTime == null) startTime = time;
+            startTime ??= time;
             endTime = time;
 
             final lat = _convertNmeaToDecimal(parts[2], parts[3]);
@@ -111,7 +127,12 @@ class _MyHomePageState extends State<MyHomePage> {
     }
 
     setState(() {
-      trackPoints = points;
+      trackData = TrackData(
+        points: points,
+        startTime: startTime,
+        endTime: endTime,
+        totalDistance: totalDistance,
+      );
     });
 
     // 経路全体が表示されるように地図を調整
@@ -188,9 +209,9 @@ class _MyHomePageState extends State<MyHomePage> {
   Widget build(BuildContext context) {
     // 経過時間の計算
     String durationText = '';
-    if (startTime != null && endTime != null) {
-      final start = _parseTime(startTime!);
-      final end = _parseTime(endTime!);
+    if (trackData.startTime != null && trackData.endTime != null) {
+      final start = _parseTime(trackData.startTime!);
+      final end = _parseTime(trackData.endTime!);
       final duration = end.difference(start);
       durationText =
           '${duration.inHours}:${(duration.inMinutes % 60).toString().padLeft(2, '0')}:${(duration.inSeconds % 60).toString().padLeft(2, '0')}';
@@ -203,9 +224,9 @@ class _MyHomePageState extends State<MyHomePage> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(widget.title),
-            if (trackPoints.isNotEmpty)
+            if (trackData.points.isNotEmpty)
               Text(
-                '距離: ${totalDistance.toStringAsFixed(2)}km  時間: $durationText',
+                '距離: ${trackData.totalDistance.toStringAsFixed(2)}km  時間: $durationText',
                 style: Theme.of(context).textTheme.bodySmall,
               ),
           ],
@@ -228,9 +249,10 @@ class _MyHomePageState extends State<MyHomePage> {
           mapController: mapController,
           options: MapOptions(
             initialCenter:
-                trackPoints
+                trackData
+                    .points
                     .isNotEmpty // centerをinitialCenterに変更
-                ? trackPoints[0]
+                ? trackData.points[0]
                 : LatLng(35.6812, 139.7671),
             initialZoom: 13.0, // zoomをinitialZoomに変更
           ),
@@ -241,11 +263,11 @@ class _MyHomePageState extends State<MyHomePage> {
                 userAgentPackageName: 'com.example.app',
                 tileProvider: CancellableNetworkTileProvider(), // 追加
               ),
-            if (trackPoints.isNotEmpty) ...[
+            if (trackData.points.isNotEmpty) ...[
               PolylineLayer(
                 polylines: [
                   Polyline(
-                    points: trackPoints,
+                    points: trackData.points,
                     strokeWidth: 3.0,
                     color: Colors.blue,
                   ),
@@ -255,7 +277,7 @@ class _MyHomePageState extends State<MyHomePage> {
                 markers: [
                   // スタート地点のマーカー
                   Marker(
-                    point: trackPoints.first,
+                    point: trackData.points.first,
                     alignment: Alignment.centerRight,
                     child: Stack(
                       children: [
@@ -276,7 +298,7 @@ class _MyHomePageState extends State<MyHomePage> {
                   ),
                   // ゴール地点のマーカー
                   Marker(
-                    point: trackPoints.last,
+                    point: trackData.points.last,
                     alignment: Alignment.centerLeft,
                     child: Stack(
                       children: [
