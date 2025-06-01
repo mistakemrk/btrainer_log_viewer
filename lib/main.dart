@@ -4,6 +4,8 @@ import 'package:flutter_map/flutter_map.dart';
 import 'package:latlong2/latlong.dart';
 import 'dart:io';
 import 'dart:math';
+import 'package:flutter_map_cancellable_tile_provider/flutter_map_cancellable_tile_provider.dart';
+import 'package:flutter/foundation.dart' show kIsWeb;
 
 void main() {
   runApp(const MyApp());
@@ -51,69 +53,88 @@ class _MyHomePageState extends State<MyHomePage> {
       totalDistance = 0.0;
     });
 
-    FilePickerResult? result = await FilePicker.platform.pickFiles();
+    try {
+      FilePickerResult? result = await FilePicker.platform.pickFiles();
 
-    if (result != null) {
-      final file = File(result.files.single.path!);
-      final lines = await file.readAsLines();
-
-      final List<LatLng> points = [];
-      LatLng? prevPoint;
-
-      for (var line in lines) {
-        try {
-          if (line.startsWith('\$GPGGA')) {
-            final parts = line.split(',');
-            if (parts.length >= 6 && parts[6] != '0') {
-              // 時刻の取得
-              final time = parts[1];
-              if (startTime == null) startTime = time;
-              endTime = time;
-
-              final lat = _convertNmeaToDecimal(parts[2], parts[3]);
-              final lng = _convertNmeaToDecimal(parts[4], parts[5]);
-              final currentPoint = LatLng(lat, lng);
-
-              // 距離の計算
-              if (prevPoint != null) {
-                totalDistance += _calculateDistance(prevPoint, currentPoint);
-              }
-
-              points.add(currentPoint);
-              prevPoint = currentPoint;
-            }
+      if (result != null) {
+        if (kIsWeb) {
+          // Web環境での処理
+          final bytes = result.files.first.bytes;
+          if (bytes != null) {
+            final content = String.fromCharCodes(bytes);
+            final lines = content.split('\n');
+            await _processLines(lines);
           }
-        } catch (e) {
-          debugPrint('Error parsing NMEA data: $e');
+        } else {
+          // デスクトップ環境での処理
+          final file = File(result.files.single.path!);
+          final lines = await file.readAsLines();
+          await _processLines(lines);
         }
       }
+    } catch (e) {
+      debugPrint('Error reading file: $e');
+    }
+  }
 
-      setState(() {
-        trackPoints = points;
-      });
+  // ファイル内容の処理を別メソッドに分離
+  Future<void> _processLines(List<String> lines) async {
+    final List<LatLng> points = [];
+    LatLng? prevPoint;
 
-      // 経路全体が表示されるように地図を調整
-      if (points.isNotEmpty) {
-        // 経路の境界ボックスを計算
-        double minLat = points.map((p) => p.latitude).reduce(min);
-        double maxLat = points.map((p) => p.latitude).reduce(max);
-        double minLng = points.map((p) => p.longitude).reduce(min);
-        double maxLng = points.map((p) => p.longitude).reduce(max);
+    for (var line in lines) {
+      try {
+        if (line.startsWith('\$GPGGA')) {
+          final parts = line.split(',');
+          if (parts.length >= 6 && parts[6] != '0') {
+            // 時刻の取得
+            final time = parts[1];
+            if (startTime == null) startTime = time;
+            endTime = time;
 
-        // 境界ボックスの中心を計算
-        double centerLat = (minLat + maxLat) / 2;
-        double centerLng = (minLng + maxLng) / 2;
+            final lat = _convertNmeaToDecimal(parts[2], parts[3]);
+            final lng = _convertNmeaToDecimal(parts[4], parts[5]);
+            final currentPoint = LatLng(lat, lng);
 
-        // マージンを追加して境界ボックスを少し大きくする
-        double latSpan = (maxLat - minLat) * 1.1;
-        double lngSpan = (maxLng - minLng) * 1.1;
+            // 距離の計算
+            if (prevPoint != null) {
+              totalDistance += _calculateDistance(prevPoint, currentPoint);
+            }
 
-        // 地図を移動
-        mapController.move(
-          LatLng(centerLat, centerLng),
-          _calculateZoomLevel(latSpan, lngSpan),
-        );
+            points.add(currentPoint);
+            prevPoint = currentPoint;
+          }
+        }
+      } catch (e) {
+        debugPrint('Error parsing NMEA data: $e');
       }
+    }
+
+    setState(() {
+      trackPoints = points;
+    });
+
+    // 経路全体が表示されるように地図を調整
+    if (points.isNotEmpty) {
+      // 経路の境界ボックスを計算
+      double minLat = points.map((p) => p.latitude).reduce(min);
+      double maxLat = points.map((p) => p.latitude).reduce(max);
+      double minLng = points.map((p) => p.longitude).reduce(min);
+      double maxLng = points.map((p) => p.longitude).reduce(max);
+
+      // 境界ボックスの中心を計算
+      double centerLat = (minLat + maxLat) / 2;
+      double centerLng = (minLng + maxLng) / 2;
+
+      // マージンを追加して境界ボックスを少し大きくする
+      double latSpan = (maxLat - minLat) * 1.1;
+      double lngSpan = (maxLng - minLng) * 1.1;
+
+      // 地図を移動
+      mapController.move(
+        LatLng(centerLat, centerLng),
+        _calculateZoomLevel(latSpan, lngSpan),
+      );
     }
   }
 
@@ -218,6 +239,7 @@ class _MyHomePageState extends State<MyHomePage> {
               TileLayer(
                 urlTemplate: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
                 userAgentPackageName: 'com.example.app',
+                tileProvider: CancellableNetworkTileProvider(), // 追加
               ),
             if (trackPoints.isNotEmpty) ...[
               PolylineLayer(
