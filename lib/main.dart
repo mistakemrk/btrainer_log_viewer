@@ -5,12 +5,23 @@ import 'package:latlong2/latlong.dart';
 import 'dart:io';
 import 'dart:math';
 import 'package:flutter_map_cancellable_tile_provider/flutter_map_cancellable_tile_provider.dart';
-import 'package:flutter/foundation.dart' show kIsWeb;
+import 'package:flutter/foundation.dart' show kIsWeb, kDebugMode;
+import 'package:logging/logging.dart';
 
 import 'models/workout_data.dart';
 import 'utils/nmea_parser.dart';
 
 void main() {
+  // ロガーの初期化
+  Logger.root.level = kDebugMode
+      ? Level.INFO
+      : Level.WARNING; // 開発時はINFO、本番はWARNING
+  Logger.root.onRecord.listen((record) {
+    if (kDebugMode) {
+      print('${record.level.name}: ${record.time}: ${record.message}');
+    }
+  });
+
   runApp(const MyApp());
 }
 
