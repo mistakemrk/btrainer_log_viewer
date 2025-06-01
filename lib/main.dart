@@ -8,6 +8,7 @@ import 'package:flutter_map_cancellable_tile_provider/flutter_map_cancellable_ti
 import 'package:flutter/foundation.dart' show kIsWeb, kDebugMode;
 import 'package:logging/logging.dart';
 
+import 'models/track_data.dart'; // TrackDataのインポートを追加
 import 'models/workout_data.dart';
 import 'utils/nmea_parser.dart';
 
@@ -46,28 +47,6 @@ class MyHomePage extends StatefulWidget {
 
   @override
   State<MyHomePage> createState() => _MyHomePageState();
-}
-
-class TrackData {
-  final List<LatLng> points;
-  final List<WorkoutData> workoutData;
-  final List<HeartRateData> heartRateData;
-  final List<WorkoutEvent> workoutEvents;
-  final List<MusicInfo> musicInfo;
-  final String? startTime;
-  final String? endTime;
-  final double totalDistance;
-
-  TrackData({
-    required this.points,
-    this.workoutData = const [],
-    this.heartRateData = const [],
-    this.workoutEvents = const [],
-    this.musicInfo = const [],
-    this.startTime,
-    this.endTime,
-    this.totalDistance = 0.0,
-  });
 }
 
 class _MyHomePageState extends State<MyHomePage> {
@@ -240,25 +219,12 @@ class _MyHomePageState extends State<MyHomePage> {
     return earthRadius * c;
   }
 
-  // NMEAの時刻文字列をDateTimeに変換
-  DateTime _parseTime(String time) {
-    final hour = int.parse(time.substring(0, 2));
-    final minute = int.parse(time.substring(2, 4));
-    final second = int.parse(time.substring(4, 6));
-    return DateTime(2024, 1, 1, hour, minute, second);
-  }
-
   @override
   Widget build(BuildContext context) {
-    // 経過時間の計算
-    String durationText = '';
-    if (trackData.startTime != null && trackData.endTime != null) {
-      final start = _parseTime(trackData.startTime!);
-      final end = _parseTime(trackData.endTime!);
-      final duration = end.difference(start);
-      durationText =
-          '${duration.inHours}:${(duration.inMinutes % 60).toString().padLeft(2, '0')}:${(duration.inSeconds % 60).toString().padLeft(2, '0')}';
-    }
+    // 経過時間の表示
+    String durationText = trackData.durationText.isNotEmpty
+        ? trackData.durationText
+        : '--:--:--';
 
     return Scaffold(
       appBar: AppBar(

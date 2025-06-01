@@ -7,24 +7,26 @@
 
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:flutter_map/flutter_map.dart';
 
 import 'package:btrainer_log_viewer/main.dart';
 
 void main() {
-  testWidgets('Counter increments smoke test', (WidgetTester tester) async {
-    // Build our app and trigger a frame.
-    await tester.pumpWidget(const MyApp());
+  testWidgets('App initialization test', (WidgetTester tester) async {
+    // テスト実行前に待機
+    await tester.runAsync(() async {
+      await tester.pumpWidget(const MyApp());
+      await tester.pump(const Duration(seconds: 1));
+    });
 
-    // Verify that our counter starts at 0.
-    expect(find.text('0'), findsOneWidget);
-    expect(find.text('1'), findsNothing);
+    // AppBar内のタイトルを探す
+    expect(find.widgetWithText(AppBar, 'B-Trainer Log Viewer'), findsOneWidget);
 
-    // Tap the '+' icon and trigger a frame.
-    await tester.tap(find.byIcon(Icons.add));
-    await tester.pump();
+    // FloatingActionButtonを探す（ファイル選択ボタン）
+    expect(find.byType(FloatingActionButton), findsOneWidget);
+    expect(find.byIcon(Icons.folder_open), findsOneWidget);
 
-    // Verify that our counter has incremented.
-    expect(find.text('0'), findsNothing);
-    expect(find.text('1'), findsOneWidget);
+    // 地図が存在することを確認
+    expect(find.byType(FlutterMap), findsOneWidget);
   });
 }

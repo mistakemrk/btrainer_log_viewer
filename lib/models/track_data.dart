@@ -11,26 +11,27 @@ class TrackData {
   final List<WorkoutEvent> workoutEvents;
   final List<MusicInfo> musicInfo;
 
-  TrackData({
-    required this.points,
+  const TrackData({
+    this.points = const [],
     this.startTime,
     this.endTime,
     this.totalDistance = 0.0,
-    List<WorkoutData>? workoutData,
-    List<HeartRateData>? heartRateData,
-    List<WorkoutEvent>? workoutEvents,
-    List<MusicInfo>? musicInfo,
-  }) : workoutData = workoutData ?? [],
-       heartRateData = heartRateData ?? [],
-       workoutEvents = workoutEvents ?? [],
-       musicInfo = musicInfo ?? [];
+    this.workoutData = const [],
+    this.heartRateData = const [],
+    this.workoutEvents = const [],
+    this.musicInfo = const [],
+  });
 
   bool get hasData => points.isNotEmpty;
 
   String get durationText {
     if (startTime == null || endTime == null) return '';
     final start = _parseTime(startTime!);
-    final end = _parseTime(endTime!);
+    var end = _parseTime(endTime!);
+    // 終了時刻が開始時刻より前の場合は、終了時刻に1日を加算
+    if (end.isBefore(start)) {
+      end = end.add(const Duration(days: 1));
+    }
     final duration = end.difference(start);
     return '${duration.inHours}:${(duration.inMinutes % 60).toString().padLeft(2, '0')}:${(duration.inSeconds % 60).toString().padLeft(2, '0')}';
   }
