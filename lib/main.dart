@@ -35,9 +35,22 @@ class MyHomePage extends StatefulWidget {
 class _MyHomePageState extends State<MyHomePage> {
   List<LatLng> trackPoints = [];
   final MapController mapController = MapController();
-  bool isMapVisible = true; // 追加: 地図表示モードの状態
+  bool isMapVisible = true;
+
+  // 追加: 走行データを保持する変数
+  String? startTime;
+  String? endTime;
+  double totalDistance = 0.0;
 
   Future<void> _openFile() async {
+    // データをクリア
+    setState(() {
+      trackPoints = [];
+      startTime = null;
+      endTime = null;
+      totalDistance = 0.0;
+    });
+
     FilePickerResult? result = await FilePicker.platform.pickFiles();
 
     if (result != null) {
@@ -45,22 +58,29 @@ class _MyHomePageState extends State<MyHomePage> {
       final lines = await file.readAsLines();
 
       final List<LatLng> points = [];
+      LatLng? prevPoint;
 
       for (var line in lines) {
         try {
           if (line.startsWith('\$GPGGA')) {
             final parts = line.split(',');
             if (parts.length >= 6 && parts[6] != '0') {
+              // 時刻の取得
+              final time = parts[1];
+              if (startTime == null) startTime = time;
+              endTime = time;
+
               final lat = _convertNmeaToDecimal(parts[2], parts[3]);
               final lng = _convertNmeaToDecimal(parts[4], parts[5]);
-              points.add(LatLng(lat, lng));
-            }
-          } else if (line.startsWith('\$GNRMC')) {
-            final parts = line.split(',');
-            if (parts.length >= 7 && parts[2] == 'A') {
-              final lat = _convertNmeaToDecimal(parts[3], parts[4]);
-              final lng = _convertNmeaToDecimal(parts[5], parts[6]);
-              points.add(LatLng(lat, lng));
+              final currentPoint = LatLng(lat, lng);
+
+              // 距離の計算
+              if (prevPoint != null) {
+                totalDistance += _calculateDistance(prevPoint, currentPoint);
+              }
+
+              points.add(currentPoint);
+              prevPoint = currentPoint;
             }
           }
         } catch (e) {
@@ -118,12 +138,57 @@ class _MyHomePageState extends State<MyHomePage> {
     return decimal;
   }
 
+  // 2点間の距離を計算するメソッド（単位: km）
+  double _calculateDistance(LatLng point1, LatLng point2) {
+    const double earthRadius = 6371; // 地球の半径（km）
+
+    final lat1 = point1.latitude * pi / 180;
+    final lat2 = point2.latitude * pi / 180;
+    final dLat = (point2.latitude - point1.latitude) * pi / 180;
+    final dLon = (point2.longitude - point1.longitude) * pi / 180;
+
+    final a =
+        sin(dLat / 2) * sin(dLat / 2) +
+        cos(lat1) * cos(lat2) * sin(dLon / 2) * sin(dLon / 2);
+    final c = 2 * atan2(sqrt(a), sqrt(1 - a));
+
+    return earthRadius * c;
+  }
+
+  // NMEAの時刻文字列をDateTimeに変換
+  DateTime _parseTime(String time) {
+    final hour = int.parse(time.substring(0, 2));
+    final minute = int.parse(time.substring(2, 4));
+    final second = int.parse(time.substring(4, 6));
+    return DateTime(2024, 1, 1, hour, minute, second);
+  }
+
   @override
   Widget build(BuildContext context) {
+    // 経過時間の計算
+    String durationText = '';
+    if (startTime != null && endTime != null) {
+      final start = _parseTime(startTime!);
+      final end = _parseTime(endTime!);
+      final duration = end.difference(start);
+      durationText =
+          '${duration.inHours}:${(duration.inMinutes % 60).toString().padLeft(2, '0')}:${(duration.inSeconds % 60).toString().padLeft(2, '0')}';
+    }
+
     return Scaffold(
       appBar: AppBar(
         backgroundColor: Theme.of(context).colorScheme.inversePrimary,
-        title: Text(widget.title),
+        title: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(widget.title),
+            if (trackPoints.isNotEmpty)
+              Text(
+                '距離: ${totalDistance.toStringAsFixed(2)}km  時間: $durationText',
+                style: Theme.of(context).textTheme.bodySmall,
+              ),
+          ],
+        ),
         actions: [
           IconButton(
             icon: Icon(isMapVisible ? Icons.visibility_off : Icons.visibility),
