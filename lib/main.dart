@@ -91,6 +91,26 @@ class _MyHomePageState extends State<MyHomePage> {
     }
   }
 
+  // チェックサム計算用のヘルパー関数
+  String calculateNMEAChecksum(String sentence) {
+    // '$'から'*'までの文字を対象とする
+    final int startIndex = sentence.indexOf('\$') + 1;
+    final int endIndex = sentence.indexOf('*');
+
+    if (startIndex < 0 || endIndex < 0 || startIndex >= endIndex) {
+      return '';
+    }
+
+    int checksum = 0;
+    // XOR演算を実行
+    for (int i = startIndex; i < endIndex; i++) {
+      checksum ^= sentence.codeUnitAt(i);
+    }
+
+    // 16進数2桁（大文字）に変換
+    return checksum.toRadixString(16).toUpperCase().padLeft(2, '0');
+  }
+
   // ファイル内容の処理を別メソッドに分離
   Future<void> _processLines(List<String> lines) async {
     final List<LatLng> points = [];
@@ -106,6 +126,25 @@ class _MyHomePageState extends State<MyHomePage> {
 
     for (var line in lines) {
       try {
+        // NMEAフォーマットのチェックサムを検証
+        if (line.startsWith('\$') && line.contains('*')) {
+          final checksumIndex = line.lastIndexOf('*');
+          if (checksumIndex != -1 && line.length >= checksumIndex + 3) {
+            final expectedChecksum = line.substring(
+              checksumIndex + 1,
+              checksumIndex + 3,
+            );
+            final calculatedChecksum = calculateNMEAChecksum(line);
+
+            if (calculatedChecksum != expectedChecksum) {
+              if (kDebugMode) {
+                print('チェックサムエラー: $line');
+              }
+              continue; // チェックサムが一致しない行はスキップ
+            }
+          }
+        }
+
         if (line.startsWith('\$GPGGA')) {
           final parts = line.split(',');
           if (parts.length >= 6 && parts[6] != '0') {

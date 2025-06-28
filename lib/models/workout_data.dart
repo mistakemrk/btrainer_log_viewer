@@ -1,7 +1,8 @@
 class WorkoutData {
   final DateTime timestamp;
+  final int mode;
   final int steps;
-  final double distance;
+  final int distance;
   final double speed;
   final double pitch;
   final double stride;
@@ -10,6 +11,7 @@ class WorkoutData {
 
   WorkoutData({
     required this.timestamp,
+    required this.mode,
     required this.steps,
     required this.distance,
     required this.speed,

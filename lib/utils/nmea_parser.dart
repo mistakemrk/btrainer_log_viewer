@@ -4,6 +4,16 @@ import '../models/workout_data.dart';
 class NmeaParser {
   static final _logger = Logger('NmeaParser');
 
+  // $PSSCR,2,67,53,2.141,0.65,1.39,2.0,2,3*55
+  // 0      1 2  3  4     5    6    7   8 9 checksum
+  // 1列目：モード（例：2=通常、3=ラップ）
+  // 2列目：累計歩数
+  // 3列目：累積距離(m)
+  // 4列目：平均ピッチ（歩/秒）
+  // 5列目：平均ストライド（m）
+  // 6列目：平均速度（km/h）
+  // 7列目：消費カロリー（kcal）
+  // 8列目：ラップ番号
   static WorkoutData? parsePSSCR(String line) {
     try {
       final parts = line.split(',');
@@ -11,23 +21,25 @@ class NmeaParser {
 
       final workoutData = WorkoutData(
         timestamp: DateTime.now(),
+        mode: int.tryParse(parts[1]) ?? 0,
         steps: int.tryParse(parts[2]) ?? 0,
-        distance: double.tryParse(parts[3]) ?? 0.0,
-        speed: double.tryParse(parts[4]) ?? 0.0,
-        pitch: double.tryParse(parts[5]) ?? 0.0,
-        stride: double.tryParse(parts[6]) ?? 0.0,
+        distance: int.tryParse(parts[3]) ?? 0,
+        pitch: double.tryParse(parts[4]) ?? 0.0,
+        stride: double.tryParse(parts[5]) ?? 0.0,
+        speed: double.tryParse(parts[6]) ?? 0.0,
         calories: double.tryParse(parts[7]) ?? 0.0,
         lapNumber: int.tryParse(parts[8]),
       );
 
       _logger.info(
-        'Workout Data - Steps: ${workoutData.steps}, '
+        'Workout Data - mode: ${workoutData.mode}, '
+        'Steps: ${workoutData.steps}, '
         'Distance: ${workoutData.distance}m, '
-        'Speed: ${workoutData.speed}km/h, '
         'Pitch: ${workoutData.pitch}, '
         'Stride: ${workoutData.stride}m, '
+        'Speed: ${workoutData.speed}km/h, '
         'Calories: ${workoutData.calories}kcal, '
-        'Lap: ${workoutData.lapNumber ?? 'N/A'}',
+        'Lap: ${workoutData.lapNumber}',
       );
 
       return workoutData;
