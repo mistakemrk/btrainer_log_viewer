@@ -95,7 +95,7 @@ class _MyHomePageState extends State<MyHomePage> {
   String? calculateNMEAChecksum(String sentence) {
     // '$'と'*'の位置を探す
     final int startIndex = sentence.indexOf('\$');
-    final int endIndex = sentence.indexOf('*');
+    final int endIndex = sentence.lastIndexOf('*');
 
     // '$'や'*'が見つからない、または順序が不正な場合はnullを返す
     if (startIndex == -1 || endIndex == -1 || (startIndex + 1) >= endIndex) {
