@@ -4,7 +4,7 @@
 
 [![Built with Flutter](https://img.shields.io/badge/Built%20with-Flutter-02569B?style=for-the-badge&logo=flutter)](https://flutter.dev)
 
-![アプリケーションのスクリーンショット](btrainer_log_viewer.png)
+![アプリケーションのスクリーンショット](https://raw.githubusercontent.com/mistakemrk/btrainer_log_viewer/main/btrainer_log_viewer.png)
 
 ## 概要
 
