@@ -16,7 +16,13 @@ class NmeaParser {
   // 8列目：ラップ番号
   static WorkoutData? parsePSSCR(String line) {
     try {
-      final parts = line.split(',');
+      // チェックサム部分(*XX)を事前に削除してからカンマで分割する
+      final checksumIndex = line.indexOf('*');
+      final sentence = checksumIndex != -1
+          ? line.substring(0, checksumIndex)
+          : line;
+      final parts = sentence.split(',');
+
       if (parts.length < 9) return null;
 
       final workoutData = WorkoutData(
