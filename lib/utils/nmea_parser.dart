@@ -142,4 +142,25 @@ class NmeaParser {
       return null;
     }
   }
+
+  /// NMEAセンテンスのチェックサムを計算します。
+  ///
+  /// '$'と最後の'*'の間のすべての文字のXORチェックサムを計算し、
+  /// 16進数2桁の文字列として返します。
+  /// フォーマットが不正な場合はnullを返します。
+  static String? calculateNMEAChecksum(String sentence) {
+    final int startIndex = sentence.indexOf('\$');
+    final int endIndex = sentence.lastIndexOf('*');
+
+    if (startIndex == -1 || endIndex == -1 || (startIndex + 1) >= endIndex) {
+      return null;
+    }
+
+    int checksum = 0;
+    for (int i = startIndex + 1; i < endIndex; i++) {
+      checksum ^= sentence.codeUnitAt(i);
+    }
+
+    return checksum.toRadixString(16).toUpperCase().padLeft(2, '0');
+  }
 }

@@ -91,27 +91,6 @@ class _MyHomePageState extends State<MyHomePage> {
     }
   }
 
-  // チェックサム計算用のヘルパー関数
-  String? calculateNMEAChecksum(String sentence) {
-    // '$'と'*'の位置を探す
-    final int startIndex = sentence.indexOf('\$');
-    final int endIndex = sentence.lastIndexOf('*');
-
-    // '$'や'*'が見つからない、または順序が不正な場合はnullを返す
-    if (startIndex == -1 || endIndex == -1 || (startIndex + 1) >= endIndex) {
-      return null;
-    }
-
-    int checksum = 0;
-    // '$'と'*'の間の文字でXOR演算を実行
-    for (int i = startIndex + 1; i < endIndex; i++) {
-      checksum ^= sentence.codeUnitAt(i);
-    }
-
-    // 16進数2桁（大文字）に変換
-    return checksum.toRadixString(16).toUpperCase().padLeft(2, '0');
-  }
-
   // ファイル内容の処理を別メソッドに分離
   Future<void> _processLines(List<String> lines) async {
     final List<LatLng> points = [];
@@ -135,7 +114,7 @@ class _MyHomePageState extends State<MyHomePage> {
               checksumIndex + 1,
               checksumIndex + 3,
             );
-            final calculatedChecksum = calculateNMEAChecksum(line);
+            final calculatedChecksum = NmeaParser.calculateNMEAChecksum(line);
 
             // calculatedChecksumがnullの場合、またはチェックサムが一致しない場合はスキップ
             // 大文字・小文字を区別せずに比較する
