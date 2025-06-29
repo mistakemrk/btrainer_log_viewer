@@ -4,8 +4,7 @@
 
 [![Built with Flutter](https://img.shields.io/badge/Built%20with-Flutter-02569B?style=for-the-badge&logo=flutter)](https://flutter.dev)
 
-![アプリケーションのスクリーンショット](https://via.placeholder.com/800x450.png?text=Application+Screenshot)
-*(ここにアプリケーションのスクリーンショットを挿入します)*
+![アプリケーションのスクリーンショット](btrainer_log_viewer.png)
 
 ## 概要
 
@@ -34,7 +33,7 @@ Flutterフレームワークを採用することで、Windows, macOS, Linux, An
 **手順:**
 ```bash
 # 1. このリポジトリをクローンします
-git clone https://github.com/your-username/btrainer_log_viewer.git
+git clone https://github.com/mistakemrk/btrainer_log_viewer.git
 cd btrainer_log_viewer
 
 # 2. 必要なパッケージをインストールします
