@@ -92,18 +92,19 @@ class _MyHomePageState extends State<MyHomePage> {
   }
 
   // チェックサム計算用のヘルパー関数
-  String calculateNMEAChecksum(String sentence) {
-    // '$'から'*'までの文字を対象とする
-    final int startIndex = sentence.indexOf('\$') + 1;
+  String? calculateNMEAChecksum(String sentence) {
+    // '$'と'*'の位置を探す
+    final int startIndex = sentence.indexOf('\$');
     final int endIndex = sentence.indexOf('*');
 
-    if (startIndex < 0 || endIndex < 0 || startIndex >= endIndex) {
-      return '';
+    // '$'や'*'が見つからない、または順序が不正な場合はnullを返す
+    if (startIndex == -1 || endIndex == -1 || (startIndex + 1) >= endIndex) {
+      return null;
     }
 
     int checksum = 0;
-    // XOR演算を実行
-    for (int i = startIndex; i < endIndex; i++) {
+    // '$'と'*'の間の文字でXOR演算を実行
+    for (int i = startIndex + 1; i < endIndex; i++) {
       checksum ^= sentence.codeUnitAt(i);
     }
 
@@ -136,11 +137,15 @@ class _MyHomePageState extends State<MyHomePage> {
             );
             final calculatedChecksum = calculateNMEAChecksum(line);
 
-            if (calculatedChecksum != expectedChecksum) {
+            // calculatedChecksumがnullの場合、またはチェックサムが一致しない場合はスキップ
+            // 大文字・小文字を区別せずに比較する
+            if (calculatedChecksum == null ||
+                calculatedChecksum.toUpperCase() !=
+                    expectedChecksum.toUpperCase()) {
               if (kDebugMode) {
-                print('チェックサムエラー: $line');
+                print('チェックサムエラーまたは不正なフォーマット: $line');
               }
-              continue; // チェックサムが一致しない行はスキップ
+              continue;
             }
           }
         }
