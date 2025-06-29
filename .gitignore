@@ -120,3 +120,4 @@ app.*.symbols
 
 # VS Code settings
 .vscode
+*.code-workspace
