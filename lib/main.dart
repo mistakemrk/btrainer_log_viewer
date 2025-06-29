@@ -109,7 +109,7 @@ class _MyHomePageState extends State<MyHomePage> {
         // NMEAフォーマットのチェックサムを検証
         if (line.startsWith('\$') && line.contains('*')) {
           final checksumIndex = line.lastIndexOf('*');
-          if (checksumIndex != -1 && line.length >= checksumIndex + 3) {
+          if (line.length >= checksumIndex + 3) {
             final expectedChecksum = line.substring(
               checksumIndex + 1,
               checksumIndex + 3,
@@ -119,8 +119,7 @@ class _MyHomePageState extends State<MyHomePage> {
             // calculatedChecksumがnullの場合、またはチェックサムが一致しない場合はスキップ
             // 大文字・小文字を区別せずに比較する
             if (calculatedChecksum == null ||
-                calculatedChecksum.toUpperCase() !=
-                    expectedChecksum.toUpperCase()) {
+                calculatedChecksum != expectedChecksum.toUpperCase()) {
               if (kDebugMode) {
                 print('チェックサムエラーまたは不正なフォーマット: $line');
               }
