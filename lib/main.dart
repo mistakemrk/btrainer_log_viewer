@@ -106,6 +106,28 @@ class _MyHomePageState extends State<MyHomePage> {
 
     for (var line in lines) {
       try {
+        // NMEAフォーマットのチェックサムを検証
+        if (line.startsWith('\$') && line.contains('*')) {
+          final checksumIndex = line.lastIndexOf('*');
+          if (line.length >= checksumIndex + 3) {
+            final expectedChecksum = line.substring(
+              checksumIndex + 1,
+              checksumIndex + 3,
+            );
+            final calculatedChecksum = NmeaParser.calculateNMEAChecksum(line);
+
+            // calculatedChecksumがnullの場合、またはチェックサムが一致しない場合はスキップ
+            // 大文字・小文字を区別せずに比較する
+            if (calculatedChecksum == null ||
+                calculatedChecksum != expectedChecksum.toUpperCase()) {
+              if (kDebugMode) {
+                print('チェックサムエラーまたは不正なフォーマット: $line');
+              }
+              continue;
+            }
+          }
+        }
+
         if (line.startsWith('\$GPGGA')) {
           final parts = line.split(',');
           if (parts.length >= 6 && parts[6] != '0') {
