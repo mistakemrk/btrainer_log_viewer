@@ -36,7 +36,7 @@ class MyApp extends StatelessWidget {
       theme: ThemeData(
         colorScheme: ColorScheme.fromSeed(seedColor: Colors.blue),
       ),
-      home: const MyHomePage(title: 'B-Trainer Log Viewer'),
+      home: const MyHomePage(title: 'B-Trainer Log Viewer (Step 1)'),
     );
   }
 }

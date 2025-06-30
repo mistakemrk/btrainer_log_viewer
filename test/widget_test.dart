@@ -20,7 +20,7 @@ void main() {
     });
 
     // AppBar内のタイトルを探す
-    expect(find.widgetWithText(AppBar, 'B-Trainer Log Viewer'), findsOneWidget);
+    expect(find.widgetWithText(AppBar, 'B-Trainer Log Viewer (Step 1)'), findsOneWidget);
 
     // FloatingActionButtonを探す（ファイル選択ボタン）
     expect(find.byType(FloatingActionButton), findsOneWidget);
