@@ -29,4 +29,30 @@ void main() {
     // 地図が存在することを確認
     expect(find.byType(FlutterMap), findsOneWidget);
   });
+
+  testWidgets('Map visibility toggle test', (WidgetTester tester) async {
+    await tester.runAsync(() async {
+      await tester.pumpWidget(const MyApp());
+
+      // 初期状態では地図が表示されていることを確認
+      expect(find.byType(TileLayer), findsOneWidget);
+      expect(find.byIcon(Icons.visibility_off), findsOneWidget);
+
+      // 表示切り替えボタンをタップ
+      await tester.tap(find.byIcon(Icons.visibility_off));
+      await tester.pump();
+
+      // 地図が非表示になっていることを確認
+      expect(find.byType(TileLayer), findsNothing);
+      expect(find.byIcon(Icons.visibility), findsOneWidget);
+
+      // もう一度ボタンをタップ
+      await tester.tap(find.byIcon(Icons.visibility));
+      await tester.pump();
+
+      // 地図が再び表示されていることを確認
+      expect(find.byType(TileLayer), findsOneWidget);
+      expect(find.byIcon(Icons.visibility_off), findsOneWidget);
+    });
+  });
 }
